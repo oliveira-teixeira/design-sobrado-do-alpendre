@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sobrado em 3D</title>
+<meta name="description" content="O Sobrado do alpendre em 3D, versão 8: sol de qualquer dia e hora em Brasília, raios de luz por cada vidro, mapa de luz no piso de cada cômodo e os móveis de alvenaria e madeira.">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#efe8da">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#efe8da;--sheet:#fbf7ee;--card:#fffdf7;--ink:#2a241d;--muted:#6e6456;--line:#d6ccba;--rule:#bfb39d;
+  --accent:#b4532a;--sun:#e9a91c;--azul:#2c5a86;
+  --shadow:0 1px 1px rgba(40,30,20,.10),0 10px 28px -8px rgba(40,30,20,.28);
+  --gut:16px;
+  color-scheme:only light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%;accent-color:var(--accent)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.loading{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;font:500 12px/1.4 "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);transition:opacity .4s}
+.loading .bad{display:none;max-width:34ch;text-align:center;text-transform:none;letter-spacing:0;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink)}
+.ready .loading{opacity:0}
+.nogl .loading .ok{display:none}
+.nogl .loading .bad{display:block}
+
+.top{position:fixed;top:max(var(--gut),env(safe-area-inset-top));left:max(var(--gut),env(safe-area-inset-left));max-width:min(560px,calc(100vw - 420px));padding:10px 14px 11px;border-radius:12px;background:color-mix(in srgb,var(--sheet) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(40,30,20,.06)}
+.back{display:inline-flex;align-items:center;gap:6px;font:500 11px/1.4 "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0}
+.back:hover{color:var(--accent)}
+h1{font:400 30px/1.05 Fraunces,Georgia,serif;letter-spacing:-.01em;margin:2px 0 4px}
+#sunline{margin:0;font-size:14px;color:var(--ink);text-wrap:pretty}
+.ver{margin:0 0 2px;font-size:13px;color:var(--muted);text-wrap:pretty}
+.ver b{font-weight:500;color:var(--accent)}
+.maplegend{margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.maplegend .leg{display:block;margin-bottom:5px}
+#ramp{height:10px;border-radius:5px}
+#ticks{position:relative;height:30px;margin:0 22px 0 6px}
+#ticks span{position:absolute;top:0;transform:translateX(-50%);padding-top:12px;font:500 10px/1.2 "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+#ticks span::before{content:"";position:absolute;left:50%;top:0;width:1px;height:9px;background:var(--ink);opacity:.5}
+#ticks span:last-child{transform:translateX(-80%)}
+.maplegend p{margin:0;font-size:12px;color:var(--muted);text-wrap:pretty}
+
+.compass{position:fixed;left:max(var(--gut),env(safe-area-inset-left));bottom:max(var(--gut),env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:color-mix(in srgb,var(--sheet) 86%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:var(--shadow);pointer-events:none}
+#needle{position:absolute;inset:0;transform-origin:50% 50%}
+#needle svg{width:100%;height:100%;display:block}
+
+.panel{position:fixed;top:max(var(--gut),env(safe-area-inset-top));right:max(var(--gut),env(safe-area-inset-right));width:348px;max-height:calc(100dvh - 2 * var(--gut));overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 16px;background:var(--sheet);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.grip{display:none}
+.ctl{padding:10px 0;border-top:1px solid var(--line)}
+.ctl:first-of-type{border-top:0;padding-top:2px}
+.lab{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:2px}
+.lab label,.lab span,legend,.leg{font:500 11px/1.4 "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+output{font-size:14px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:28px;margin:0;cursor:pointer}
+.hr{display:flex;align-items:center;gap:10px}
+.play{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;padding:0}
+.play svg{width:14px;height:14px;fill:var(--ink)}
+.play .i-pause,.play[aria-pressed=true] .i-play{display:none}
+.play[aria-pressed=true] .i-pause{display:block}
+.play[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
+.play[aria-pressed=true] svg{fill:var(--sheet)}
+.chips,.seg,.cams div{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips button,.seg button,.cams button{min-height:32px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.chips button{border-radius:999px}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.seg button{padding:5px 4px}
+.chips button:hover,.seg button:hover,.cams button:hover{border-color:var(--rule)}
+.chips button[aria-pressed=true],.seg button[aria-checked=true]{background:var(--ink);border-color:var(--ink);color:var(--sheet)}
+.sub{margin-top:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{padding:0;margin-bottom:4px}
+.show label{display:flex;align-items:center;gap:8px;font-size:14px;min-height:30px;cursor:pointer}
+.show input{width:16px;height:16px;margin:0}
+.cams div{flex-direction:column;align-items:stretch;gap:4px;margin-top:4px}
+h2{font:400 20px/1.2 Fraunces,Georgia,serif;margin:4px 0 2px;padding-top:12px;border-top:1px solid var(--line)}
+.ray{margin:0;font-size:13px;color:var(--muted)}
+.rooms{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:9px}
+.rooms li{display:grid;grid-template-columns:1fr auto;gap:3px 8px;align-items:baseline}
+.rooms .nm{font-size:14px}
+.rooms .lx{font:500 12px/1 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+.rooms .bar{grid-column:1/-1;position:relative;height:6px;border-radius:3px;background:var(--line)}
+.rooms .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--rule);transition:width .25s ease-out}
+.rooms li.lit .bar i{background:var(--sun)}
+.rooms .bar b{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--ink);opacity:.45}
+.rooms .sp{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:10px 0 0;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:1px;height:12px;background:var(--ink);opacity:.45}
+.note{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--muted);text-wrap:pretty}
+.tip{position:fixed;z-index:4;max-width:240px;padding:8px 11px 9px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(42,36,29,.12);font-size:13px;line-height:1.45;pointer-events:none}
+.tip[hidden]{display:none}
+.tip .l{display:block}
+.tip .l:first-child{margin-bottom:2px}
+.tip b{font-weight:500}
+.tip .l:first-child span{margin-left:6px;color:var(--muted)}
+
+@media (max-width:759px){
+  :root{--gut:12px}
+  .top{right:max(var(--gut),env(safe-area-inset-right));max-width:none;padding:8px 12px 9px;margin-right:62px}
+  h1{font-size:22px}
+  /* on a phone the title card keeps the version and the sun; the summary of the plan stays on wide screens and on the plans page */
+  .ver .vx{display:none}
+  #sunline{font-size:13px}
+  .compass{left:auto;bottom:auto;top:max(var(--gut),env(safe-area-inset-top));right:max(var(--gut),env(safe-area-inset-right));width:50px;height:50px}
+  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:78dvh;border-radius:16px 16px 0 0;border-width:1px 0 0;padding:0 max(16px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  .grip{display:flex;justify-content:center;align-items:center;width:100%;height:26px;border:0;background:none;cursor:pointer;padding:0;position:sticky;top:0;background:var(--sheet);z-index:1}
+  .grip .pill{width:40px;height:4px;border-radius:2px;background:var(--rule)}
+  .panel:not(.open) .more{display:none}
+  .ctl{padding:8px 0}
+  .ctl:first-of-type{padding-top:0}
+  input[type=range]{height:34px}
+  .chips{margin-top:2px}
+  .chips button,.seg button,.cams button{min-height:36px}
+}
+@media (pointer:coarse){
+  .chips button,.seg button,.cams button,.show label{min-height:44px}
+  .play{width:44px;height:44px}
+  .grip{height:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  .rooms .bar i,.loading{transition:none}
+}
+</style>
+</head>
+<body>
+<canvas id="gl" role="img" aria-label="Modelo 3D do sobrado. Arraste para girar, use dois dedos ou a roda do mouse para aproximar."></canvas>
+<div class="tip" id="tip" role="status" hidden></div>
+<div class="loading" role="status"><span class="ok">Montando a casa</span><span class="bad">Este navegador não abriu o WebGL, que desenha o modelo 3D. Tente outro navegador ou atualize o sistema.</span></div>
+
+<header class="top">
+  <a class="back" href="./" id="back"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2 3.5 6l4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Plantas e cortes</a>
+  <h1>Sobrado em 3D</h1>
+  <p class="ver"><b>Versão 8, em estudo.</b><span class="vx"> A casa ocupa o corredor oeste e o fundo do lote. Cozinha e copa abrem para o alpendre; no térreo, um estar que vira quarto de hóspedes; no 1º, um cômodo reversível.</span></p>
+  <p id="sunline"></p>
+  <div class="maplegend" id="mapLegend" hidden>
+    <span class="leg">Mapa de luz no piso, em lux</span>
+    <div id="ramp" aria-hidden="true"></div>
+    <div id="ticks" aria-hidden="true"></div>
+    <p>Luz do céu, do sol e a que volta das paredes, a cada 20 cm. 60 lx é o mínimo da NBR 15575; 300 lx dá para ler.</p>
+  </div>
+</header>
+
+<div class="compass" aria-hidden="true"><div id="needle"><svg viewBox="0 0 52 52"><path d="M26 13 30.5 28 26 25.5 21.5 28Z" fill="#b4532a"/><path d="M26 39 30.5 28 26 30.5 21.5 28Z" fill="#bfb39d"/><text x="26" y="11" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" font-weight="500" fill="#2a241d">N</text></svg></div></div>
+
+<section class="panel" id="panel" aria-label="Sol, vistas e luz nos cômodos">
+  <button class="grip" id="grip" type="button" aria-expanded="false" aria-controls="more"><span class="pill"></span><span class="sr">Mais controles e luz nos cômodos</span></button>
+  <div class="ctl">
+    <div class="lab"><label for="dia">Dia</label><output id="diaOut" for="dia"></output></div>
+    <input type="range" id="dia" min="1" max="365" step="1">
+    <div class="chips" role="group" aria-label="Datas marcadas">
+      <button type="button" data-dia="172" title="Solstício de inverno: o sol mais baixo, ao norte">21 jun</button>
+      <button type="button" data-dia="265" title="Equinócio: o sol nasce no leste e se põe no oeste">22 set</button>
+      <button type="button" data-dia="355" title="Solstício de verão: ao meio-dia o sol passa ao sul">21 dez</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <div class="lab"><label for="hora">Hora solar</label><output id="horaOut" for="hora"></output></div>
+    <div class="hr">
+      <button type="button" class="play" id="play" aria-pressed="false" aria-label="Animar o dia"><svg class="i-play" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11L12.5 7z"/></svg><svg class="i-pause" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 1.5h3.2v11H2.5zM8.3 1.5h3.2v11H8.3z"/></svg></button>
+      <input type="range" id="hora" min="5.5" max="18.5" step="0.25" title="Hora pelo sol: ao meio-dia solar o sol está no ponto mais alto">
+    </div>
+  </div>
+  <div class="more" id="more">
+    <div class="ctl">
+      <div class="lab"><span id="vistaLab">Vista</span></div>
+      <div class="seg" role="radiogroup" aria-labelledby="vistaLab">
+        <button type="button" role="radio" data-vista="inteira">Inteira</button>
+        <button type="button" role="radio" data-vista="terreo" title="Planta do térreo, cortada a 1,5 m do piso">Térreo</button>
+        <button type="button" role="radio" data-vista="p1" title="Planta do 1º pavimento, cortada a 1,5 m do piso">1º</button>
+        <button type="button" role="radio" data-vista="p2" title="Planta do 2º pavimento, cortada a 1,5 m do piso">2º</button>
+        <button type="button" role="radio" data-vista="corte" title="Corte vertical de norte a sul, visto do leste">Corte</button>
+      </div>
+      <div class="sub" id="corteRow" hidden>
+        <div class="lab"><label for="corteX">Posição do corte</label><output id="corteOut" for="corteX"></output></div>
+        <input type="range" id="corteX" min="0.3" max="8.4" step="0.05">
+      </div>
+    </div>
+    <div class="ctl two">
+      <fieldset class="show"><legend>Mostrar</legend>
+        <label><input type="checkbox" id="mapa">Mapa de luz</label>
+        <label><input type="checkbox" id="raios">Raios de sol</label>
+        <label><input type="checkbox" id="viz">Vizinhos</label>
+        <label><input type="checkbox" id="arv">Árvores</label>
+        <label><input type="checkbox" id="mob">Móveis</label>
+      </fieldset>
+      <div class="cams"><span class="leg" id="camLab">Câmera</span><div role="group" aria-labelledby="camLab">
+        <button type="button" data-cam="rua">Da rua</button>
+        <button type="button" data-cam="fundos">Dos fundos</button>
+        <button type="button" data-cam="aerea">Do alto</button>
+      </div></div>
+    </div>
+    <h2>Luz nos cômodos</h2>
+    <p class="ray" id="rayline"></p>
+    <ol class="rooms" id="rooms"></ol>
+    <p class="legend"><span><i></i>60 lx, mínimo da NBR 15575</span><span><i></i>300 lx, luz para ler</span></p>
+    <p class="note">Cada vidro é amostrado a cada 20 cm. De cada ponto sai um raio na direção do sol: se nada o bloqueia, ele entra até o primeiro piso ou parede que encontrar. O mapa de luz divide o piso em quadros de 20 cm; de cada quadro saem 96 raios para um céu nublado padrão e 4 raios para o sol. Vidro, muxarabi, cobogó, grelha e copas deixam passar parte da luz, e a luz que entra em cada cômodo volta das paredes e do teto com refletância média de 50%. Os vizinhos de 6,2 m no limite do lote cortam o sol baixo da manhã e da tarde; desligue os vizinhos para comparar.</p>
+    <p class="note">Toque ou clique num piso para ler a luz naquele ponto e a média do cômodo.</p>
+  </div>
+</section>
+
+<script>
+/* back to the plans: return in history when we came from them, so their scroll and tab are kept */
+document.getElementById('back').addEventListener('click', function (e) {
+  try { if (document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1) { e.preventDefault(); history.back(); } } catch (err) {}
+});
+</script>
+<script type="module" src="3d.js"></script>
+</body>
+</html>
